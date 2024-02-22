@@ -1,6 +1,13 @@
 "use client";
 
-import { Button, Checkbox, FormControlLabel, IconButton, InputAdornment, TextField } from "@mui/material";
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  TextField,
+} from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -14,16 +21,26 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,  
+  FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { LoginSchema } from "@/schemas/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { LockSimple, User } from "@phosphor-icons/react/dist/ssr";
+import { useLogin } from "@/services/auth";
+
 export default function LoginForm() {
+  const { login, isPending, error } = useLogin() as {
+    login: (data: z.infer<typeof LoginSchema>) => Promise<void>;
+    isPending: boolean;
+    error: any;
+  };
+  
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -31,10 +48,19 @@ export default function LoginForm() {
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
+
+  const onSubmit = async (data: z.infer<typeof LoginSchema>) => {
+    try {
+      await login(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
 
   return (
     <div className="flex justify-center">
@@ -46,52 +72,80 @@ export default function LoginForm() {
           width={100}
           height={100}
         />
-        <div className="flex flex-col gap-5">
-          <TextField
-            id="username"
-            className="rounded-md w-full bg-white"
-            size="small"
-            type={"text"}
-            placeholder={"Username"}
-            required
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconButton onClick={handleClickShowPassword} edge="start">
-                    <PersonOutlineOutlinedIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            id="password"
-            className="rounded-md w-full bg-white"
-            size="small"
-            type={showPassword ? "text" : "password"}
-            placeholder={"Password"}
-            required
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={handleClickShowPassword} edge="end">
-                    {showPassword ? <Visibility /> : <VisibilityOff />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconButton onClick={handleClickShowPassword} edge="start">
-                    <LockOutlinedIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <FormControlLabel control={<Checkbox/>} label="Save password" />
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-5 w-full"
+          >
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <User size={26} weight="thin" />
+                      </div>
+                      <Input
+                        required
+                        placeholder="Username"
+                        {...field}
+                        className=""
+                      />
+                    </div>
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              rules={{ required: "Username is require" }}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <LockSimple size={26} weight="thin" />
+                      </div>
+                      <Input
+                        {...field}
+                        placeholder="Password"
+                        required
+                        type="password"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormControlLabel
+              control={<Checkbox />}
+              label="Save password"
+              className="text-primary-main"
+            />
+            <Button
+              type="submit"
+              variant="outlined"
+              sx={{ backgroundColor: "#264eca !important", color: "white" }}
+            >
+              Login
+            </Button>
+            <Link
+              href="#"
+              className="text-end italic text-primary-main hover:opacity-70"
+            >
+              Forgot Password?
+            </Link>
+          </form>
+        </Form>
+        {/* 
           <Button variant="outlined" sx={{backgroundColor: '#264eca !important', color:'white' }}>Login</Button>
-          <Link href="#" className="text-end italic text-primary hover:opacity-70">Forgot Password?</Link>
-        </div>
+           */}
       </div>
     </div>
   );
